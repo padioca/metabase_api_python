@@ -47,6 +47,7 @@ def copy_card(self, source_card_name=None, source_card_id=None,
     card_json = source_card
     card_json['collection_id'] = destination_collection_id
     card_json['name'] = destination_card_name
+    card_json['database_id'] = 3
 
     # Fix the issue #10
     if card_json.get('description') == '': 
@@ -108,7 +109,7 @@ def copy_pulse(self, source_pulse_name=None, source_pulse_id=None,
     pulse_json['name'] = destination_pulse_name
 
     # Save as a new pulse
-    self.post('/api/pulse', json=pulse_json)
+    self.post('/api/pulse', data=pulse_json)
 
 
 
@@ -166,17 +167,17 @@ def copy_dashboard(self, source_dashboard_name=None, source_dashboard_id=None,
         source_dashboard = self.get('/api/dashboard/{}'.format(source_dashboard_id))
 
         # create an empty collection to copy the cards into it
-        res = self.post('/api/collection/', 
-                        json={'name':destination_dashboard_name + "'s cards", 
-                                'color':'#509EE3', 
-                                'parent_id':destination_collection_id})
-        cards_collection_id = res['id']
+        # res = self.post('/api/collection/',
+        #                 json={'name':destination_dashboard_name + "'s cards",
+        #                         'color':'#509EE3',
+        #                         'parent_id':destination_collection_id})
+        # cards_collection_id = res['id']
 
         # duplicate cards and put them in the created collection and make a card_id mapping
         source_dashboard_card_IDs = [ i['card_id'] for i in source_dashboard['ordered_cards'] if i['card_id'] is not None ]
         card_id_mapping = {}
         for card_id in source_dashboard_card_IDs:
-            dup_card_id = self.copy_card(source_card_id=card_id, destination_collection_id=cards_collection_id)
+            dup_card_id = self.copy_card(source_card_id=card_id, destination_collection_id=destination_collection_id)
             card_id_mapping[card_id] = dup_card_id
 
         # replace cards in the duplicated dashboard with duplicated cards
@@ -261,7 +262,8 @@ def copy_collection(self, source_collection_name=None, source_collection_id=None
 
     ### get the items to copy
     items = self.get('/api/collection/{}/items'.format(source_collection_id))
-    if type(items) == dict:  # in Metabase version *.40.0 the format of the returned result for this endpoint changed
+    if type(items) == dict:
+        items['data'].sort(key=lambda item: item['model'] != 'dashboard')# in Metabase version *.40.0 the format of the returned result for this endpoint changed
         items = items['data']
 
     ### copy the items of the source collection to the new collection
@@ -292,6 +294,12 @@ def copy_collection(self, source_collection_name=None, source_collection_id=None
 
         ## copy a card
         if item['model'] == 'card':
+            updated_items = self.get('/api/collection/{}/items'.format(destination_collection_id))
+            matching_card = [d for d in updated_items["data"] if d["name"] == item['name']]
+
+            if matching_card:
+                print(f"A card with the name '{item['name']}' was found, so a duplicate card was not created.")
+                continue
             card_id = item['id']
             card_name = item['name']
             destination_card_name = card_name + child_items_postfix

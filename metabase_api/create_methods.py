@@ -192,8 +192,12 @@ def create_collection(self, collection_name, parent_collection_id=None, parent_c
             parent_collection_id = None
         else:
             parent_collection_id = self.get_item_id('collection', parent_collection_name)
+            
+    new_collection_data = {
+        "name": collection_name, "parent_id": parent_collection_id, "color": "#509EE3"
+    }
 
-    res = self.post('/api/collection', json={'name':collection_name, 'parent_id':parent_collection_id, 'color':'#509EE3'})
+    res = self.post('/api/collection', json=new_collection_data)
     if return_results:
         return res
 

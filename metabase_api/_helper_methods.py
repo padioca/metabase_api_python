@@ -248,8 +248,8 @@ def get_columns_name_id(self, table_name=None, db_name=None, table_id=None, db_i
     Return a dictionary with col_name key and col_id value, for the given table_id/table_name in the given db_id/db_name.
     If column_id_name is True, return a dictionary with col_id key and col_name value.
     '''
-    if not self.friendly_names_is_disabled():
-        raise ValueError('Please disable "Friendly Table and Field Names" from Admin Panel > Settings > General, and try again.')
+    #if not self.friendly_names_is_disabled():
+        #raise ValueError('Please disable "Friendly Table and Field Names" from Admin Panel > Settings > General, and try again.')
 
     if not table_name:
         if not table_id:
